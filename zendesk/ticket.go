@@ -1,62 +1,9 @@
 package zendesk
 
-import "time"
-
-type CustomField struct {
-	ID    int64  `json:"id"`
-	Value string `json:"value"`
-}
-
-type SatisfactionRating struct {
-	ID      int64  `json:"id"`
-	Score   string `json:"score"`
-	Comment string `json:"comment"`
-}
-
-//{
-//"id":               35436,
-//"url":              "https://company.zendesk.com/api/v2/tickets/35436.json",
-//"external_id":      "ahg35h3jh",
-//"created_at":       "2009-07-20T22:55:29Z",
-//"updated_at":       "2011-05-05T10:38:52Z",
-//"type":             "incident",
-//"subject":          "Help, my printer is on fire!",
-//"raw_subject":      "{{dc.printer_on_fire}}",
-//"description":      "The fire is very colorful.",
-//"priority":         "high",
-//"status":           "open",
-//"recipient":        "support@company.com",
-//"requester_id":     20978392,
-//"submitter_id":     76872,
-//"assignee_id":      235323,
-//"organization_id":  509974,
-//"group_id":         98738,
-//"collaborator_ids": [35334, 234],
-//"follower_ids":     [35334, 234], // This functionally is the same as collaborators for now.
-//"problem_id":       9873764,
-//"has_incidents":    false,
-//"due_at":           null,
-//"tags":             ["enterprise", "other_tag"],
-//"via": {
-//"channel": "web"
-//},
-//"custom_fields": [
-//{
-//"id":    27642,
-//"value": "745"
-//},
-//{
-//"id":    27648,
-//"value": "yes"
-//}
-//],
-//"satisfaction_rating": {
-//"id": 1234,
-//"score": "good",
-//"comment": "Great support!"
-//},
-//"sharing_agreement_ids": [84432]
-//}
+import (
+	"encoding/json"
+	"time"
+)
 
 const (
 	IncidentTicketType = "incident"
@@ -76,6 +23,17 @@ const (
 	SolvedTicketStatus  = "solved"
 	ClosedTicketStatus  = "closed"
 )
+
+type CustomField struct {
+	ID    int64  `json:"id"`
+	Value string `json:"value"`
+}
+
+type SatisfactionRating struct {
+	ID      int64  `json:"id"`
+	Score   string `json:"score"`
+	Comment string `json:"comment"`
+}
 
 type Ticket struct {
 	ID              int64     `json:"id,omitempty"`
@@ -104,5 +62,27 @@ type Ticket struct {
 	//TODO: add via object https://developer.zendesk.com/rest_api/docs/support/ticket_audits.html#the-via-object
 	CustomFields         []CustomField      `json:"custom_fields,omitempty"`
 	SatisfactionRating   SatisfactionRating `json:"satisfaction_rating,omitempty"`
-	SharingAggreementIDs []int64            `json:"sharing_aggreement_ids, omitempty"`
+	SharingAgreementIDs []int64            `json:"sharing_agreement_ids, omitempty"`
+}
+
+type TicketAPI interface {
+	CreateTicket(ticket Ticket) (Ticket, error)
+}
+
+func (z *Client) CreateTicket(ticket Ticket) (Ticket, error) {
+	var data, result struct {
+		Ticket Ticket `json:"ticket"`
+	}
+	data.Ticket = ticket
+
+	body, err := z.Post("/tickets.json", data)
+	if err != nil {
+		return Ticket{}, err
+	}
+
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return Ticket{}, err
+	}
+	return result.Ticket, nil
 }

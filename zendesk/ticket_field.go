@@ -16,7 +16,7 @@ type TicketFieldSystemFieldOption struct {
 	Value    string `json:"value"`
 }
 
-// TicketField is struct for ticket_field payload
+// Ticket is struct for ticket_field payload
 type TicketField struct {
 	ID                  int64                          `json:"id,omitempty"`
 	URL                 string                         `json:"url,omitempty"`
